@@ -36,6 +36,7 @@ const App: React.FC = () => {
         dynamicTyping: true,
         skipEmptyLines: true,
         worker: true,
+        chunkSize: 1024 * 1024 * 3, // 1MB chunk size
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         chunk: (results: any) => {
           allData = allData.concat(results.data);
