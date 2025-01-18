@@ -32,6 +32,8 @@ const App: React.FC = () => {
       Papa.parse(csv, {
         header: true,
         dynamicTyping: true,
+        skipEmptyLines: true,
+        worker: true,
         complete: (results) => {
           if (Array.isArray(results.data)) {
             console.log("Parsed Data:", results.data); // Log the parsed data
