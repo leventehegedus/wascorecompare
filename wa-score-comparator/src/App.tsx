@@ -29,11 +29,17 @@ const App: React.FC = () => {
       const decoder = new TextDecoder("utf-8");
       const csv = decoder.decode(result?.value);
 
+      let allData: ScoringDataRow[] = [];
+
       Papa.parse(csv, {
         header: true,
         dynamicTyping: true,
         skipEmptyLines: true,
         worker: true,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        chunk: (results: any) => {
+          allData = allData.concat(results.data);
+        },
         complete: (results) => {
           if (Array.isArray(results.data)) {
             console.log("Parsed Data:", results.data); // Log the parsed data
