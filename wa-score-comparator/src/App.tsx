@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
-import Papa from "papaparse";
 
 interface ScoringDataRow {
   Points: number;
   Discipline: string;
-  Result: number;
+  Result: string;
   Gender: string;
   Environment: string;
 }
@@ -23,69 +22,31 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await fetch("/merged.csv");
-      const reader = response.body?.getReader();
-      const result = await reader?.read();
-      const decoder = new TextDecoder("utf-8");
-      const csv = decoder.decode(result?.value);
+      const response = await fetch("/data_men.json");
+      const data: ScoringDataRow[] = await response.json();
 
-      let allData: ScoringDataRow[] = [];
+      console.log("Parsed Data:", data); // Log the parsed data
 
-      Papa.parse(csv, {
-        header: true,
-        dynamicTyping: true,
-        skipEmptyLines: true,
-        worker: true,
-        chunkSize: 1024 * 1024 * 3, // 1MB chunk size
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        chunk: (results: any) => {
-          allData = allData.concat(results.data);
-        },
-        complete: () => {
-          console.log("Parsed Data:", allData); // Log the parsed data
+      const groupedData: GroupedData = data.reduce((acc, row) => {
+        const discipline = row.Discipline.toString();
+        const gender = row.Gender;
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const transformedData = allData.map((row: any) => {
-            return {
-              Points: row.Points,
-              Discipline: row.Discipline,
-              Result: row.Result,
-              Gender: row.Gender,
-              Environment: row.Environment,
-            };
-          });
+        if (!acc[discipline]) {
+          acc[discipline] = { Male: [], Female: [] };
+        }
 
-          console.log("Transformed Data:", transformedData); // Log the transformed data
+        if (gender === "M") {
+          acc[discipline].Male.push(row);
+        } else if (gender === "F") {
+          acc[discipline].Female.push(row);
+        }
 
-          const groupedData: GroupedData = transformedData.reduce(
-            (acc, row) => {
-              const discipline = row.Discipline;
-              const gender = row.Gender;
+        return acc;
+      }, {} as GroupedData);
 
-              if (!acc[discipline]) {
-                acc[discipline] = { Male: [], Female: [] };
-              }
+      console.log("Grouped Data:", groupedData); // Log the grouped data
 
-              if (gender === "M") {
-                acc[discipline].Male.push(row);
-              } else if (gender === "F") {
-                acc[discipline].Female.push(row);
-              }
-
-              return acc;
-            },
-            {} as GroupedData
-          );
-
-          console.log("Grouped Data:", groupedData); // Log the grouped data
-
-          setScoringData(groupedData);
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        error: (error: any) => {
-          console.error("Error parsing CSV:", error);
-        },
-      });
+      setScoringData(groupedData);
     };
 
     fetchData();
@@ -106,10 +67,6 @@ const App: React.FC = () => {
   };
 
   const shouldShowTables = selectedDiscipline || inputPoints !== "";
-
-  useEffect(() => {
-    console.log("Scoring Data:", scoringData); // Log the scoring data
-  }, [scoringData]);
 
   return (
     <div className="p-6">
@@ -149,18 +106,14 @@ const App: React.FC = () => {
                     gender as "Male" | "Female"
                   ]
                     .filter(
-                      (row: ScoringDataRow) =>
-                        inputPoints === "" || row.Points === inputPoints
+                      (row) => inputPoints === "" || row.Points === inputPoints
                     )
-                    .sort(
-                      (a: ScoringDataRow, b: ScoringDataRow) =>
-                        b.Points - a.Points
-                    );
+                    .sort((a, b) => b.Points - a.Points);
 
                   return filteredData.length > 0 ? (
                     <div key={index} className="mb-6">
                       <h2 className="text-xl font-semibold mb-2">{gender}</h2>
-                      <table className="min-w-full border-collapse">
+                      <table className="min-w-full border-collapse text-black">
                         <thead>
                           <tr>
                             <th className="border border-gray-300 p-2 bg-gray-100">
@@ -200,8 +153,7 @@ const App: React.FC = () => {
                 (gender) => {
                   return (
                     scoringData[discipline][gender as "Male" | "Female"].filter(
-                      (row: ScoringDataRow) =>
-                        inputPoints === "" || row.Points === inputPoints
+                      (row) => inputPoints === "" || row.Points === inputPoints
                     ).length > 0
                   );
                 }
@@ -215,18 +167,15 @@ const App: React.FC = () => {
                       gender as "Male" | "Female"
                     ]
                       .filter(
-                        (row: ScoringDataRow) =>
+                        (row) =>
                           inputPoints === "" || row.Points === inputPoints
                       )
-                      .sort(
-                        (a: ScoringDataRow, b: ScoringDataRow) =>
-                          b.Points - a.Points
-                      );
+                      .sort((a, b) => b.Points - a.Points);
 
                     return filteredData.length > 0 ? (
                       <div key={index} className="mb-6">
                         <h2 className="text-xl font-semibold mb-2">{gender}</h2>
-                        <table className="min-w-full border-collapse">
+                        <table className="min-w-full border-collapse text-black">
                           <thead>
                             <tr>
                               <th className="border border-gray-300 p-2 bg-gray-100">
@@ -238,23 +187,21 @@ const App: React.FC = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {filteredData.map(
-                              (row: ScoringDataRow, index: number) => (
-                                <tr
-                                  key={index}
-                                  className={
-                                    index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                                  }
-                                >
-                                  <td className="border border-gray-300 p-2">
-                                    {row.Points}
-                                  </td>
-                                  <td className="border border-gray-300 p-2">
-                                    {row.Result}
-                                  </td>
-                                </tr>
-                              )
-                            )}
+                            {filteredData.map((row, index) => (
+                              <tr
+                                key={index}
+                                className={
+                                  index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                                }
+                              >
+                                <td className="border border-gray-300 p-2">
+                                  {row.Points}
+                                </td>
+                                <td className="border border-gray-300 p-2">
+                                  {row.Result}
+                                </td>
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       </div>
