@@ -34,6 +34,8 @@ const App: React.FC = () => {
         dynamicTyping: true,
         complete: (results) => {
           if (Array.isArray(results.data)) {
+            console.log("Parsed Data:", results.data); // Log the parsed data
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const transformedData = results.data.map((row: any) => {
               return {
@@ -44,6 +46,8 @@ const App: React.FC = () => {
                 Environment: row.Environment,
               };
             });
+
+            console.log("Transformed Data:", transformedData); // Log the transformed data
 
             const groupedData: GroupedData = transformedData.reduce(
               (acc, row) => {
@@ -64,6 +68,8 @@ const App: React.FC = () => {
               },
               {} as GroupedData
             );
+
+            console.log("Grouped Data:", groupedData); // Log the grouped data
 
             setScoringData(groupedData);
           }
@@ -93,6 +99,10 @@ const App: React.FC = () => {
   };
 
   const shouldShowTables = selectedDiscipline || inputPoints !== "";
+
+  useEffect(() => {
+    console.log("Scoring Data:", scoringData); // Log the scoring data
+  }, [scoringData]);
 
   return (
     <div className="p-6">
