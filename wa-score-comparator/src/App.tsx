@@ -24,23 +24,24 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       const response = await fetch("/merged.csv");
-      const reader = response.body.getReader();
-      const result = await reader.read();
+      const reader = response.body?.getReader();
+      const result = await reader?.read();
       const decoder = new TextDecoder("utf-8");
-      const csv = decoder.decode(result.value);
+      const csv = decoder.decode(result?.value);
 
       Papa.parse(csv, {
         header: true,
         dynamicTyping: true,
         complete: (results) => {
           if (Array.isArray(results.data)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const transformedData = results.data.map((row: any) => {
               return {
-                Points: Object.values(row)[0],
-                Discipline: Object.values(row)[1],
-                Result: Object.values(row)[2],
-                Gender: Object.values(row)[3],
-                Environment: Object.values(row)[4],
+                Points: row.Points,
+                Discipline: row.Discipline,
+                Result: row.Result,
+                Gender: row.Gender,
+                Environment: row.Environment,
               };
             });
 
@@ -67,7 +68,8 @@ const App: React.FC = () => {
             setScoringData(groupedData);
           }
         },
-        error: (error) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        error: (error: any) => {
           console.error("Error parsing CSV:", error);
         },
       });
@@ -126,11 +128,17 @@ const App: React.FC = () => {
               <h1 className="text-2xl font-bold mb-4">{selectedDiscipline}</h1>
               {Object.keys(scoringData[selectedDiscipline]).map(
                 (gender, index) => {
-                  const filteredData = scoringData[selectedDiscipline][gender]
+                  const filteredData = scoringData[selectedDiscipline][
+                    gender as "Male" | "Female"
+                  ]
                     .filter(
-                      (row) => inputPoints === "" || row.Points === inputPoints
+                      (row: ScoringDataRow) =>
+                        inputPoints === "" || row.Points === inputPoints
                     )
-                    .sort((a, b) => b.Points - a.Points);
+                    .sort(
+                      (a: ScoringDataRow, b: ScoringDataRow) =>
+                        b.Points - a.Points
+                    );
 
                   return filteredData.length > 0 ? (
                     <div key={index} className="mb-6">
@@ -174,8 +182,9 @@ const App: React.FC = () => {
               const hasData = Object.keys(scoringData[discipline]).some(
                 (gender) => {
                   return (
-                    scoringData[discipline][gender].filter(
-                      (row) => inputPoints === "" || row.Points === inputPoints
+                    scoringData[discipline][gender as "Male" | "Female"].filter(
+                      (row: ScoringDataRow) =>
+                        inputPoints === "" || row.Points === inputPoints
                     ).length > 0
                   );
                 }
@@ -185,12 +194,17 @@ const App: React.FC = () => {
                 <div key={discipline} className="mb-6">
                   <h1 className="text-2xl font-bold mb-4">{discipline}</h1>
                   {Object.keys(scoringData[discipline]).map((gender, index) => {
-                    const filteredData = scoringData[discipline][gender]
+                    const filteredData = scoringData[discipline][
+                      gender as "Male" | "Female"
+                    ]
                       .filter(
-                        (row) =>
+                        (row: ScoringDataRow) =>
                           inputPoints === "" || row.Points === inputPoints
                       )
-                      .sort((a, b) => b.Points - a.Points);
+                      .sort(
+                        (a: ScoringDataRow, b: ScoringDataRow) =>
+                          b.Points - a.Points
+                      );
 
                     return filteredData.length > 0 ? (
                       <div key={index} className="mb-6">
@@ -207,21 +221,23 @@ const App: React.FC = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {filteredData.map((row, index) => (
-                              <tr
-                                key={index}
-                                className={
-                                  index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                                }
-                              >
-                                <td className="border border-gray-300 p-2">
-                                  {row.Points}
-                                </td>
-                                <td className="border border-gray-300 p-2">
-                                  {row.Result}
-                                </td>
-                              </tr>
-                            ))}
+                            {filteredData.map(
+                              (row: ScoringDataRow, index: number) => (
+                                <tr
+                                  key={index}
+                                  className={
+                                    index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                                  }
+                                >
+                                  <td className="border border-gray-300 p-2">
+                                    {row.Points}
+                                  </td>
+                                  <td className="border border-gray-300 p-2">
+                                    {row.Result}
+                                  </td>
+                                </tr>
+                              )
+                            )}
                           </tbody>
                         </table>
                       </div>
