@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from "react";
+import Select from "react-select";
+
+enum Gender {
+  Male = "M",
+  Female = "F",
+}
 
 interface ScoringDataRow {
   Points: number;
   Discipline: string;
   Result: string;
-  Gender: string;
+  Gender: Gender;
   Environment: string;
 }
 
@@ -17,7 +23,7 @@ interface GroupedData {
 
 const App: React.FC = () => {
   const [scoringData, setScoringData] = useState<GroupedData>({});
-  const [selectedDiscipline, setSelectedDiscipline] = useState<string>("");
+  const [selectedDisciplines, setSelectedDisciplines] = useState<string[]>([]);
   const [inputPoints, setInputPoints] = useState<number | "">("");
 
   useEffect(() => {
@@ -35,9 +41,9 @@ const App: React.FC = () => {
           acc[discipline] = { Male: [], Female: [] };
         }
 
-        if (gender === "M") {
+        if (gender === Gender.Male) {
           acc[discipline].Male.push(row);
-        } else if (gender === "F") {
+        } else if (gender === Gender.Female) {
           acc[discipline].Female.push(row);
         }
 
@@ -52,10 +58,12 @@ const App: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleDisciplineChange = (
-    event: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    setSelectedDiscipline(event.target.value);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleDisciplineChange = (selectedOptions: any) => {
+    setSelectedDisciplines(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      selectedOptions ? selectedOptions.map((option: any) => option.value) : []
+    );
   };
 
   const handlePointsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,23 +74,23 @@ const App: React.FC = () => {
     }
   };
 
-  const shouldShowTables = selectedDiscipline || inputPoints !== "";
+  const shouldShowTables = selectedDisciplines.length > 0 || inputPoints !== "";
+
+  const disciplineOptions = Object.keys(scoringData).map((discipline) => ({
+    value: discipline,
+    label: discipline,
+  }));
 
   return (
-    <div className="p-6">
+    <div className="p-6 text-black bg-white">
       <div className="flex gap-4 mb-6">
-        <select
+        <Select
+          isMulti
+          options={disciplineOptions}
           onChange={handleDisciplineChange}
-          value={selectedDiscipline}
-          className="p-2 border border-gray-300 rounded"
-        >
-          <option value="">Select Discipline</option>
-          {Object.keys(scoringData).map((discipline) => (
-            <option key={discipline} value={discipline}>
-              {discipline}
-            </option>
-          ))}
-        </select>
+          className="w-full"
+          placeholder="Select Disciplines"
+        />
 
         <input
           type="number"
@@ -91,68 +99,75 @@ const App: React.FC = () => {
           placeholder="Enter points (1-1400)"
           min="1"
           max="1400"
-          className="p-2 border border-gray-300 rounded"
+          className="p-2 border border-gray-300 rounded text-black bg-white"
         />
       </div>
 
       <div>
         {shouldShowTables ? (
-          selectedDiscipline ? (
-            <div>
-              <h1 className="text-2xl font-bold mb-4">{selectedDiscipline}</h1>
-              {Object.keys(scoringData[selectedDiscipline]).map(
-                (gender, index) => {
-                  const filteredData = scoringData[selectedDiscipline][
-                    gender as "Male" | "Female"
-                  ]
-                    .filter(
-                      (row) => inputPoints === "" || row.Points === inputPoints
-                    )
-                    .sort((a, b) => b.Points - a.Points);
+          selectedDisciplines.length > 0 ? (
+            selectedDisciplines.map((selectedDiscipline) => (
+              <div key={selectedDiscipline}>
+                <h1 className="text-2xl font-bold mb-4">
+                  {selectedDiscipline}
+                </h1>
+                {Object.keys(scoringData[selectedDiscipline]).map(
+                  (gender, index) => {
+                    const filteredData = scoringData[selectedDiscipline][
+                      gender as keyof typeof Gender
+                    ]
+                      .filter(
+                        (row) =>
+                          inputPoints === "" || row.Points === inputPoints
+                      )
+                      .sort((a, b) => b.Points - a.Points);
 
-                  return filteredData.length > 0 ? (
-                    <div key={index} className="mb-6">
-                      <h2 className="text-xl font-semibold mb-2">{gender}</h2>
-                      <table className="min-w-full border-collapse text-black">
-                        <thead>
-                          <tr>
-                            <th className="border border-gray-300 p-2 bg-gray-100">
-                              Points
-                            </th>
-                            <th className="border border-gray-300 p-2 bg-gray-100">
-                              Result
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredData.map((row, index) => (
-                            <tr
-                              key={index}
-                              className={
-                                index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                              }
-                            >
-                              <td className="border border-gray-300 p-2">
-                                {row.Points}
-                              </td>
-                              <td className="border border-gray-300 p-2">
-                                {row.Result}
-                              </td>
+                    return filteredData.length > 0 ? (
+                      <div key={index} className="mb-6">
+                        <h2 className="text-xl font-semibold mb-2">{gender}</h2>
+                        <table className="min-w-full border-collapse">
+                          <thead>
+                            <tr>
+                              <th className="border border-gray-300 p-2 bg-gray-100">
+                                Points
+                              </th>
+                              <th className="border border-gray-300 p-2 bg-gray-100">
+                                Result
+                              </th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : null;
-                }
-              )}
-            </div>
+                          </thead>
+                          <tbody>
+                            {filteredData.map((row, index) => (
+                              <tr
+                                key={index}
+                                className={
+                                  index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                                }
+                              >
+                                <td className="border border-gray-300 p-2">
+                                  {row.Points}
+                                </td>
+                                <td className="border border-gray-300 p-2">
+                                  {row.Result}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : null;
+                  }
+                )}
+              </div>
+            ))
           ) : (
             Object.keys(scoringData).map((discipline) => {
               const hasData = Object.keys(scoringData[discipline]).some(
                 (gender) => {
                   return (
-                    scoringData[discipline][gender as "Male" | "Female"].filter(
+                    scoringData[discipline][
+                      gender as keyof typeof Gender
+                    ].filter(
                       (row) => inputPoints === "" || row.Points === inputPoints
                     ).length > 0
                   );
@@ -164,7 +179,7 @@ const App: React.FC = () => {
                   <h1 className="text-2xl font-bold mb-4">{discipline}</h1>
                   {Object.keys(scoringData[discipline]).map((gender, index) => {
                     const filteredData = scoringData[discipline][
-                      gender as "Male" | "Female"
+                      gender as keyof typeof Gender
                     ]
                       .filter(
                         (row) =>
@@ -175,7 +190,7 @@ const App: React.FC = () => {
                     return filteredData.length > 0 ? (
                       <div key={index} className="mb-6">
                         <h2 className="text-xl font-semibold mb-2">{gender}</h2>
-                        <table className="min-w-full border-collapse text-black">
+                        <table className="min-w-full border-collapse">
                           <thead>
                             <tr>
                               <th className="border border-gray-300 p-2 bg-gray-100">
