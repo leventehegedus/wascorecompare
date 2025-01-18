@@ -40,47 +40,45 @@ const App: React.FC = () => {
         chunk: (results: any) => {
           allData = allData.concat(results.data);
         },
-        complete: (results) => {
-          if (Array.isArray(results.data)) {
-            console.log("Parsed Data:", results.data); // Log the parsed data
+        complete: () => {
+          console.log("Parsed Data:", allData); // Log the parsed data
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const transformedData = results.data.map((row: any) => {
-              return {
-                Points: row.Points,
-                Discipline: row.Discipline,
-                Result: row.Result,
-                Gender: row.Gender,
-                Environment: row.Environment,
-              };
-            });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const transformedData = allData.map((row: any) => {
+            return {
+              Points: row.Points,
+              Discipline: row.Discipline,
+              Result: row.Result,
+              Gender: row.Gender,
+              Environment: row.Environment,
+            };
+          });
 
-            console.log("Transformed Data:", transformedData); // Log the transformed data
+          console.log("Transformed Data:", transformedData); // Log the transformed data
 
-            const groupedData: GroupedData = transformedData.reduce(
-              (acc, row) => {
-                const discipline = row.Discipline;
-                const gender = row.Gender;
+          const groupedData: GroupedData = transformedData.reduce(
+            (acc, row) => {
+              const discipline = row.Discipline;
+              const gender = row.Gender;
 
-                if (!acc[discipline]) {
-                  acc[discipline] = { Male: [], Female: [] };
-                }
+              if (!acc[discipline]) {
+                acc[discipline] = { Male: [], Female: [] };
+              }
 
-                if (gender === "M") {
-                  acc[discipline].Male.push(row);
-                } else if (gender === "F") {
-                  acc[discipline].Female.push(row);
-                }
+              if (gender === "M") {
+                acc[discipline].Male.push(row);
+              } else if (gender === "F") {
+                acc[discipline].Female.push(row);
+              }
 
-                return acc;
-              },
-              {} as GroupedData
-            );
+              return acc;
+            },
+            {} as GroupedData
+          );
 
-            console.log("Grouped Data:", groupedData); // Log the grouped data
+          console.log("Grouped Data:", groupedData); // Log the grouped data
 
-            setScoringData(groupedData);
-          }
+          setScoringData(groupedData);
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         error: (error: any) => {
