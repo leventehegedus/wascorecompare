@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Select from "react-select";
 
 enum Gender {
   Male = "M",
@@ -58,11 +57,11 @@ const App: React.FC = () => {
     fetchData();
   }, []);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleDisciplineChange = (selectedOptions: any) => {
-    setSelectedDisciplines(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      selectedOptions ? selectedOptions.map((option: any) => option.value) : []
+  const handleDisciplineClick = (discipline: string) => {
+    setSelectedDisciplines((prevSelected) =>
+      prevSelected.includes(discipline)
+        ? prevSelected.filter((d) => d !== discipline)
+        : [...prevSelected, discipline]
     );
   };
 
@@ -76,21 +75,24 @@ const App: React.FC = () => {
 
   const shouldShowTables = selectedDisciplines.length > 0 || inputPoints !== "";
 
-  const disciplineOptions = Object.keys(scoringData).map((discipline) => ({
-    value: discipline,
-    label: discipline,
-  }));
+  const disciplineOptions = Object.keys(scoringData);
 
   return (
     <div className="p-6 text-black bg-white">
-      <div className="flex gap-4 mb-6">
-        <Select
-          isMulti
-          options={disciplineOptions}
-          onChange={handleDisciplineChange}
-          className="w-full"
-          placeholder="Select Disciplines"
-        />
+      <div className="flex gap-4 mb-6 flex-wrap">
+        {disciplineOptions.map((discipline) => (
+          <button
+            key={discipline}
+            onClick={() => handleDisciplineClick(discipline)}
+            className={`p-2 border rounded ${
+              selectedDisciplines.includes(discipline)
+                ? "bg-blue-500 text-white"
+                : "bg-gray-200 text-black"
+            }`}
+          >
+            {discipline}
+          </button>
+        ))}
 
         <input
           type="number"
@@ -99,7 +101,7 @@ const App: React.FC = () => {
           placeholder="Enter points (1-1400)"
           min="1"
           max="1400"
-          className="p-2 border border-gray-300 rounded text-black bg-white"
+          className="p-2 border border-gray-300 rounded w-full text-black bg-white"
         />
       </div>
 
